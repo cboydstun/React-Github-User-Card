@@ -1,26 +1,55 @@
-import React from 'react';
-import logo from './logo.svg';
-import './App.css';
+import React, { Component } from "react";
+import axios from "axios";
+import SearchForm from "./Components/SearchForm";
+import UserCard from "./Components/UserCard";
+import FollowersList from "./Components/FollowersList";
+import "./App.css";
 
-function App() {
-  return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
-  );
+class App extends Component {
+  state = { search: "cboydstun", user: null, followers: [] };
+
+  handleSubmit = value => {
+    this.setState({ ...this.state, search: value });
+  };
+
+  componentDidMount() {
+    axios
+      .get("https://api.github.com/users/cboydstun")
+      .then(res => {
+        this.setState({ ...this.state, user: res.data });
+        axios
+          .get(this.state.user.followers_url)
+          .then(res => this.setState({ ...this.state, followers: res.data }))
+          .catch(err => console.error(err));
+      })
+      .catch(err => console.error(err));
+  }
+
+  componentDidUpdate(prevProps, prevState) {
+    if (prevState.search !== this.state.search) {
+      axios
+        .get(`https://api.github.com/users/${this.state.search}`)
+        .then(res => {
+          this.setState({ ...this.state, user: res.data });
+          axios
+            .get(this.state.user.followers_url)
+            .then(res => this.setState({ ...this.state, followers: res.data }))
+            .catch(err => console.error(err));
+        })
+        .catch(err => console.error(err));
+    }
+  }
+
+  render() {
+    return (
+      <div className="App">
+        <SearchForm handleSubmit={this.handleSubmit} />
+        <UserCard data={this.state.user} />
+        <h1 className="h1text">Your Followers</h1>
+        <FollowersList data={this.state.followers} />
+      </div>
+    );
+  }
 }
 
 export default App;
